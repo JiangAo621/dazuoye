@@ -18,8 +18,8 @@ class MyList{
 		}
 		else os << obj.a[obj.terminal] << ']';
 		return os;
-    }//如果T是可以直接cout的类的话（比如int），按Python数组的格式输出MyList中的每一个元素，例如：
-    // [1, 2, 5, 4, 1]
+        }//如果T是可以直接cout的类的话（比如int），按Python数组的格式输出MyList中的每一个元素，例如：
+         // [1, 2, 5, 4, 1]
     
 	friend MyList<T> operator+ (const MyList<T> &l1, const MyList<T> &l2){
 		MyList<T> tmp;
@@ -92,8 +92,8 @@ class MyList{
 			terminal = size - 1;
 		}//以arr的前len个元素构造数组
 		
-	    void push(const T &item);//将item添加在MyList最后
-        T pop();//将MyList中最后一个元素删除，并返回这个删除的元素。
+	    	void push(const T &item);//将item添加在MyList最后
+            	T pop();//将MyList中最后一个元素删除，并返回这个删除的元素。
 		void insert(int index, const T&item);//将item插入到place处。
 		void clean();//清空数组。
 		int get_size();//返回MyList中元素的数量。
@@ -102,7 +102,7 @@ class MyList{
 		MyList<T> get_item(int start, int end);//返回MyList中第start到第end位的元素，包括两边。此处需要像python一样接受负数，具体见测试代码。
 		void remove(const T &item);//删除MyList中第一个和item相等的元素。
 		//实现一个快速排序或归并排序，对支持比较运算符（>=<）的类进行排序。
-        // 若less=true，按照从小到大排列，否则按从大到小排列
+        	// 若less=true，按照从小到大排列，否则按从大到小排列
 		void quicksort(T a[], int low, int high);
 		int findmid(T a[], int low, int high);
 		void sort(bool less = true);
