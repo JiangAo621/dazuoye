@@ -1,0 +1,357 @@
+#include<iostream>
+using namespace std;
+
+template<class T> class MyList;
+template<class T> MyList<T> operator+(const MyList<T> &l1, const MyList<T> &l2);
+template<class T> ostream &operator<<(ostream &os, const MyList<T>&obj);
+template<class T> MyList<T> operator+(const MyList<T> &l1, const T &item);
+
+template<class T>
+class MyList{
+	friend ostream & operator<< (ostream &os, const MyList<T> &obj){
+		os << '[';
+		for(int i = 0; i < obj.terminal; ++i){
+		os << obj.a[i] << ", ";
+		} 
+		if(obj.terminal < 0){
+			os << ']';
+		}
+		else os << obj.a[obj.terminal] << ']';
+		return os;
+    }//如果T是可以直接cout的类的话（比如int），按Python数组的格式输出MyList中的每一个元素，例如：
+    // [1, 2, 5, 4, 1]
+    
+	friend MyList<T> operator+ (const MyList<T> &l1, const MyList<T> &l2){
+		MyList<T> tmp;
+		while(tmp.size < l1.size + l2.size){
+			tmp.double_space();
+		}
+		tmp.terminal = l1.terminal + l2.terminal + 1;
+		for(int i = 0; i <= l1.terminal; ++i){
+			tmp.a[i] = l1.a[i];
+		}
+		for(int i = l1.terminal + 1; i <= tmp.terminal; ++i){
+			tmp.a[i] = l2.a[i - l1.terminal - 1];
+		}
+		return tmp;
+	} //合并两个MyList
+	
+	friend MyList<T> operator+(const MyList<T> &l1, const T &item){
+		MyList<T> l2;
+		l2 = l1;
+		l2.push(item);
+		return l2;
+	}//同push(T item)，但不修改l1，返回一个新数组
+	
+	private:
+		T *a;
+		int size;
+		int terminal;
+		void double_space(){
+			T *b;
+			size *= 2;
+			b = new T[size];
+			for(int i = 0;i <= terminal; ++i){
+				b[i] = a[i];
+			}
+			delete []a;
+			a = b;
+		}
+	public: 
+		MyList(int l = 100){
+			size = l;
+			terminal = -1;
+			a = new T[size];
+		} 
+		
+		MyList(int num, const T&item){
+			size = num;
+			a = new T[size];
+			for(int i = 0;i < num; ++i){
+				a[i] = item;
+			}
+			terminal = num - 1;
+		}//将item重复num次填入数组中。
+		
+		MyList(const MyList<T> &l){
+			size = l.size;
+			terminal = l.terminal;
+			delete []a;
+			a = new T[size];
+			for(int i = 0; i <= terminal; ++i){
+				a[i] = l.a[i];
+			}
+		}//深复制另外一个MyList。
+		
+		MyList(T *arr, int len){
+			size = len;
+			a = new T[size];
+			for(int i = 0;i < len; ++i){
+				a[i] = arr[i];
+			}
+			terminal = size - 1;
+		}//以arr的前len个元素构造数组
+		
+	    void push(const T &item);//将item添加在MyList最后
+        T pop();//将MyList中最后一个元素删除，并返回这个删除的元素。
+		void insert(int index, const T&item);//将item插入到place处。
+		void clean();//清空数组。
+		int get_size();//返回MyList中元素的数量。
+		void erase(int start, int end); //删除MyList中第start到第end位的元素，包括两边。
+		T get_item(int index);//返回第index个元素。
+		MyList<T> get_item(int start, int end);//返回MyList中第start到第end位的元素，包括两边。此处需要像python一样接受负数，具体见测试代码。
+		void remove(const T &item);//删除MyList中第一个和item相等的元素。
+		//实现一个快速排序或归并排序，对支持比较运算符（>=<）的类进行排序。
+        // 若less=true，按照从小到大排列，否则按从大到小排列
+		void quicksort(T a[], int low, int high);
+		int findmid(T a[], int low, int high);
+		void sort(bool less = true);
+		void reverse();//将MyList的元素倒过来。
+		int count(const T &item);//返回MyList中和item相等的元素的个数。
+		MyList<T> & operator=(const MyList<T> &l);//赋值
+		T &operator[](int index);//返回第index个元素。
+		MyList<T> &operator+=(const MyList<T>&l1);//将一个MyList加入到本个MyList之后。
+		MyList<T> &operator +=(const T &item);//同push(T item)
+		~MyList() {delete []a;};
+};
+
+
+//将一个MyList加入到本个MyList之后
+template<class T>
+MyList<T>& MyList<T> :: operator+=(const MyList<T>&l1){
+	*this = *this + l1;
+	return(*this);
+}
+
+//返回MyList中和item相等的元素的个数
+template<class T>
+int MyList<T> :: count(const T &item){
+	int num = 0;
+	for(int i = 0; i <= terminal; ++i){
+		if(a[i] == item){
+			++num;
+		}
+	}
+	return num;
+}
+
+//同push(T item) 
+template<class T>
+MyList<T>& MyList<T> :: operator+=(const T &item){
+	push(item);
+	return *this;
+}
+
+//返回第index个元素
+template<class T>
+T& MyList<T> :: operator[](int index){
+	return a[index];
+} 
+
+//删除MyList中第一个和item相等的元素
+template <class T>
+void MyList<T> :: remove(const T &item){
+	for(int i = 0; i <= terminal; ++i){
+		if(a[i] == item){
+			erase(i,i);
+			return;
+		}
+	}
+}
+
+//将MyList的元素倒过来
+template<class T>
+void MyList<T> :: reverse(){
+	MyList<T> tmp;
+	tmp = *this;
+	for(int i = 0; i <= terminal; ++i){
+		a[i] = tmp.a[terminal - i]; 
+	}
+}
+
+//实现一个快速排序或归并排序，对支持比较运算符的类进行排序 
+//若less=true,按照从小到大的顺序排，否则按照从大到小的顺序排
+template<class T>
+void MyList<T> :: sort(bool less){
+	int low;
+	int high;
+	low = 0;
+	high = terminal;
+	quicksort(a, low, high);
+	if(!less){
+		reverse();
+	}
+}
+template<class T>
+void MyList<T> :: quicksort(T a[], int low, int high){
+	T mid;
+	if(low >= high)    return ;
+	mid = findmid(a, low, high);
+	quicksort(a, low, mid - 1);
+	quicksort(a, mid + 1, high);
+}
+
+template<class T>
+int MyList<T> :: findmid(T a[], int low, int high){
+	T k = a[low];
+	do{
+		while(low < high && a[high] >= k)    --high;
+		if(low < high){a[low] = a[high]; ++low;}
+		while(low < high && a[low] <= k)    ++low;
+		if(low < high){a[high] = a[low]; --high;}    
+	}while(low!=high);
+	a[low] = k;
+	return low;
+} 
+
+//将item添加在MyList最后
+template<class T>
+void MyList<T> :: push(const T &item){
+	if(terminal == size - 1){
+    	double_space();
+	}
+	a[++terminal] = item; 
+} 
+
+//将Mylst中最后一个元素删除，并返回这个删除的元素 
+template<class T>
+T MyList<T> :: pop(){
+	try{
+	    if(terminal < 0)    throw(1);
+	    return a[terminal--];
+	}
+	catch(int){exit(1);}
+}
+
+//将item插入到place处
+template<class T>
+void MyList<T> :: insert(int index, const T&item){
+	try{
+		if(index < 0 || index > terminal + 1)    throw(1);
+		if(terminal == size - 1){
+			double_space();
+		}
+		for(int i = terminal; i >= index; --i){
+			a[i + 1] = a[i];
+		}
+		a[index] = item;
+		++terminal;
+    }
+    catch(int){
+    	cout << "No room as " << index << endl;exit(1); 
+	}
+}
+
+//清空数组
+template<class T>
+void MyList<T> :: clean(){
+	size = 0;
+	terminal = -1;
+}
+
+//返回MyList中元素的数量
+template<class T>
+int MyList<T> :: get_size(){
+	return (terminal + 1);
+}
+
+//删除MyList中第start到第end位的元素，包括两边
+template<class T>
+void MyList<T> :: erase(int start, int end){
+	try{
+		if(start > end)    throw(1);
+		if(end < 0 || end > terminal)    throw('p');
+		if(start < 0 || start > terminal)    throw(0.1);
+		for(int i = start; i < start + terminal - end; ++i){
+			a[i] = a[ i + end - start + 1];
+		}
+		terminal = start + terminal - end - 1;
+	}
+	catch(int){exit(1);}
+	catch(char){exit(1);}
+	catch(double){exit(1);}
+}
+
+//返回第index个元素
+template<class T>
+T MyList<T> :: get_item(int index){
+	try{
+		if(index < 0 || index > terminal)    throw(1);
+		return a[index];
+	}
+	catch(int){exit(1);}
+}
+
+//返回MyList中第start到第end位的元素，包括两边。此处需要像python一样接受负数，具体见测试代码。
+template<class T>
+MyList<T> MyList<T> :: get_item(int start, int end){
+	try{
+		if(start > end)    throw(1);
+		if(start < 0 || start > terminal)    throw(0.1);
+		if(end < 0 || end > terminal)    throw('p');
+		if(start < 0)    start += (terminal + 1);
+		if(end < 0)    end += (terminal + 1);
+		if(start > end){
+	    	MyList<T> q;
+	   		return q;
+		}
+		else{
+			MyList<T> sublist(end - start + 1);
+			for(int i = 0; i < end - start + 1; ++i){
+				sublist.a[i] = a[start + i];
+				++sublist.terminal;
+			}
+			return sublist;
+		}
+	}
+	catch(int){exit(1);}
+	catch(double){exit(1);}
+	catch(char){exit(1);}
+}
+
+//赋值运算符重载
+template<class T>
+MyList<T>& MyList<T> :: operator=(const MyList &l){
+	if(this == &l) return *this;
+	delete []a;
+	size = l.size;
+	terminal = l.terminal;
+	a = new T[size];
+	for(int i = 0; i <= terminal; ++i){
+		a[i] = l.a[i];
+	} 
+	return *this;
+} 
+
+int main(){
+	MyList<int> a, b;
+	int i;
+	for (i=0; i<5; ++i)
+		a.push(i);
+    // a = [0, 1, 2, 3, 4]
+	a[3] = 15; // a = [0, 1, 2, 15, 4]
+	a.sort(); // a = [0, 1, 2, 4, 15]
+	a.reverse(); // a = [15, 4, 2, 1, 0]
+	a += 12; // a = [15, 4, 2, 1, 0, 12]
+	for (i=0; i<a.get_size(); ++i)
+		cout<<a[i]<<endl;
+    b = a.get_item(4, -3); // b = [] *若start > end，返回空数组
+	b = a.get_item(3, -1); // b = [1, 0, 12] 
+	a += b; // a = [15, 4, 2, 1, 0, 12, 1, 0, 12]
+	for (i=0; i<a.get_size(); ++i)
+		cout<<a.get_item(i)<<endl;
+	cout<<a.count(5)<<endl;
+	b.clean(); // b = []
+	cout<<b.get_size()<<endl;
+	a.erase(2, 5); // a = [15, 4, 0, 12]
+	b = a + a; // b = [15, 4, 0, 12, 15, 4, 0, 12]
+	b.insert(3, 116); // b = [15, 4, 0, 116, 12, 15, 4, 0, 12]
+	b.remove(4); // b = [15, 0, 116, ...]
+	cout<<b<<endl;
+	MyList<double> c(10, 3.14);
+	for (i=0; i<100; ++i)
+		c.push(1.1*i);
+	cout<<c.get_item(100, 105)<<endl;
+	
+	return 0;
+}
